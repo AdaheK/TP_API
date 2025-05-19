@@ -33,23 +33,23 @@ const Albums = class Albums {
   }
 
   showById() {
-    this.app.get('/album/:id', (req, res) => {
+    this.app.get('/album/:id', async (req, res) => {
       try {
-        this.AlbumModel.findById(req.params.id)
-          .then((album) => {
-            res.status(200).json(album || {});
-          }).catch(() => {
-            res.status(500).json({
-              code: 500,
-              message: 'Internal Server Error'
-            });
-          });
+        const album = await this.AlbumModel.findById(req.params.id);
+        return res.status(200).json(album || {});
       } catch (err) {
         console.error(`[ERROR] album/:id -> ${err}`);
 
-        res.status(400).json({
-          code: 400,
-          message: 'Bad Request'
+        if (err.name === 'CastError') {
+          return res.status(400).json({
+            code: 400,
+            message: 'ID invalide'
+          });
+        }
+
+        return res.status(500).json({
+          code: 500,
+          message: 'Internal Server Error'
         });
       }
     });
@@ -77,10 +77,51 @@ const Albums = class Albums {
     });
   }
 
+  getAll() {
+    this.app.get('/albums', async (req, res) => {
+      try {
+        const query = {};
+
+        if (req.query.title) {
+          query.title = { $regex: req.query.title, $options: 'i' };
+        }
+
+        const albums = await this.AlbumModel.find(query).populate('photos');
+
+        res.status(200).json(albums);
+      } catch (err) {
+        console.error('[ERROR] GET /albums ->', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+      }
+    });
+  }
+
+  updateById() {
+    this.app.put('/album/:id', async (req, res) => {
+      try {
+        const album = await this.AlbumModel.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true }
+        ).populate('photos');
+
+        if (!album) {
+          return res.status(404).json({ message: 'Album non trouvé' });
+        }
+        return res.status(200).json(album);
+      } catch (err) {
+        console.error('[ERROR] PUT /album/:id ->', err);
+        return res.status(400).json({ message: 'Requête invalide' });
+      }
+    });
+  }
+
   run() {
     this.create();
     this.showById();
     this.deleteById();
+    this.getAll();
+    this.updateById();
   }
 };
 

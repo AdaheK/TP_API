@@ -2,9 +2,10 @@ import mongoose from 'mongoose';
 
 const PhotoSchema = new mongoose.Schema({
   title: { type: String, required: true },
+  url: { type: String, required: true },
   description: String,
-  date: { type: Date, default: Date.now },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true }
+  created_at: { type: Date, default: Date.now },
+  album: { type: mongoose.Schema.Types.ObjectId, ref: 'Album', required: true }
 }, {
   collection: 'photos',
   minimize: false,
