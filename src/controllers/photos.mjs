@@ -2,16 +2,17 @@ import PhotoModel from '../models/photo.mjs';
 import AlbumModel from '../models/album.mjs';
 
 const Photos = class Photos {
-  constructor(app, connect) {
+  constructor(app, connect, jwtMiddleware) {
     this.app = app;
     this.PhotoModel = connect.model('Photo', PhotoModel);
     this.AlbumModel = connect.model('Album', AlbumModel);
+    this.jwtMiddleware = jwtMiddleware;
 
     this.run();
   }
 
   getPhotosInAlbum() {
-    this.app.get('/album/:albumId/photos', async (req, res) => {
+    this.app.get('/album/:albumId/photos', this.jwtMiddleware, async (req, res) => {
       try {
         const photos = await this.PhotoModel.find({ album: req.params.albumId });
         res.status(200).json(photos);
@@ -23,7 +24,7 @@ const Photos = class Photos {
   }
 
   getOnePhoto() {
-    this.app.get('/album/:albumId/photo/:photoId', async (req, res) => {
+    this.app.get('/album/:albumId/photo/:photoId', this.jwtMiddleware, async (req, res) => {
       try {
         const photo = await this.PhotoModel.findOne({
           _id: req.params.photoId,
@@ -63,7 +64,7 @@ const Photos = class Photos {
   }
 
   updatePhotoInAlbum() {
-    this.app.put('/album/:albumId/photo/:photoId', async (req, res) => {
+    this.app.put('/album/:albumId/photo/:photoId', this.jwtMiddleware, async (req, res) => {
       try {
         const updated = await this.PhotoModel.findOneAndUpdate(
           { _id: req.params.photoId, album: req.params.albumId },
@@ -82,7 +83,7 @@ const Photos = class Photos {
   }
 
   deletePhotoInAlbum() {
-    this.app.delete('/album/:albumId/photo/:photoId', async (req, res) => {
+    this.app.delete('/album/:albumId/photo/:photoId', this.jwtMiddleware, async (req, res) => {
       try {
         const deleted = await this.PhotoModel.findOneAndDelete({
           _id: req.params.photoId,

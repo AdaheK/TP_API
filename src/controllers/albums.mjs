@@ -1,9 +1,10 @@
 import AlbumModel from '../models/album.mjs';
 
 const Albums = class Albums {
-  constructor(app, connect) {
+  constructor(app, connect, jwtMiddleware) {
     this.app = app;
     this.AlbumModel = connect.model('Album', AlbumModel);
+    this.jwtMiddleware = jwtMiddleware;
 
     this.run();
   }
@@ -33,7 +34,7 @@ const Albums = class Albums {
   }
 
   showById() {
-    this.app.get('/album/:id', async (req, res) => {
+    this.app.get('/album/:id', this.jwtMiddleware, async (req, res) => {
       try {
         const album = await this.AlbumModel.findById(req.params.id);
         return res.status(200).json(album || {});
@@ -56,7 +57,7 @@ const Albums = class Albums {
   }
 
   deleteById() {
-    this.app.delete('/album/:id', (req, res) => {
+    this.app.delete('/album/:id', this.jwtMiddleware, (req, res) => {
       try {
         this.AlbumModel.findByIdAndDelete(req.params.id).then((album) => {
           res.status(200).json(album || {});
@@ -78,7 +79,7 @@ const Albums = class Albums {
   }
 
   getAll() {
-    this.app.get('/albums', async (req, res) => {
+    this.app.get('/albums', this.jwtMiddleware, async (req, res) => {
       try {
         const query = {};
 
@@ -97,7 +98,7 @@ const Albums = class Albums {
   }
 
   updateById() {
-    this.app.put('/album/:id', async (req, res) => {
+    this.app.put('/album/:id', this.jwtMiddleware, async (req, res) => {
       try {
         const album = await this.AlbumModel.findByIdAndUpdate(
           req.params.id,
