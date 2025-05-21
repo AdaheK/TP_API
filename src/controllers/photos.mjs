@@ -1,3 +1,4 @@
+import validator from 'better-validator';
 import PhotoModel from '../models/photo.mjs';
 import AlbumModel from '../models/album.mjs';
 
@@ -44,6 +45,18 @@ const Photos = class Photos {
   addPhotoToAlbum() {
     this.app.post('/album/:albumId/photo', async (req, res) => {
       try {
+        validator(req.body).required().isObject((obj, err) => {
+          obj('title').required().isString();
+          obj('url').required().isString();
+          obj('description').isString();
+
+          if (err) {
+            res.status(400).json({
+              code: 400,
+              message: 'Bad request'
+            });
+          }
+        });
         const photo = new this.PhotoModel({
           ...req.body,
           album: req.params.albumId

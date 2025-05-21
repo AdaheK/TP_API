@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+
 // Dependencies
 import express from 'express';
 import mongoose from 'mongoose';
@@ -6,6 +10,7 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import jwt from 'jsonwebtoken';
+import limiter from 'express-limiter';
 
 // Core
 import config from './config.mjs';
@@ -63,6 +68,20 @@ const Server = class Server {
   }
 
   middleware() {
+    limiter(this.app);
+    limiter({
+      path: '*',
+      method: 'all',
+      lookup: ['connection.remoteAddress'],
+      total: 100,
+      expire: 1000 * 60 * 60,
+      onRateLimited: (req, res) => {
+        res.status(429).json({
+          code: 429,
+          message: 'Rate limit exceeded'
+        });
+      }
+    });
     this.app.use(compression());
     this.app.use(cors({
       origin: ['http://localhost:3000'],
@@ -78,6 +97,7 @@ const Server = class Server {
     new routes.Photos(this.app, this.connect, this.jwtMiddleware);
     new routes.Albums(this.app, this.connect, this.jwtMiddleware);
     new routes.Auth(this.app);
+    new routes.Pipeline(this.app);
 
     this.app.use((req, res) => {
       res.status(404).json({
@@ -117,11 +137,19 @@ const Server = class Server {
 
   async run() {
     try {
+      const options = {
+        key: fs.readFileSync(path.join('ssl', 'key.pem')),
+        cert: fs.readFileSync(path.join('ssl', 'localhost.pem'))
+      };
       await this.dbConnect();
       this.security();
       this.middleware();
       this.routes();
-      this.app.listen(this.config.port);
+      const server = https.createServer(options, this.app);
+      server.listen(this.config.port, () => {
+        console.log(`HTTPS Server running on port ${this.config.port}`);
+      });
+      // this.app.listen(this.config.port);
     } catch (err) {
       console.error(`[ERROR] Server -> ${err}`);
     }

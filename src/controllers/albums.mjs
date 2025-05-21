@@ -1,3 +1,4 @@
+import validator from 'better-validator';
 import AlbumModel from '../models/album.mjs';
 
 const Albums = class Albums {
@@ -12,6 +13,17 @@ const Albums = class Albums {
   create() {
     this.app.post('/album/', (req, res) => {
       try {
+        validator(req.body).required().isObject((obj, err) => {
+          obj('title').required().isString();
+          obj('description').isString();
+
+          if (err) {
+            res.status(400).json({
+              code: 400,
+              message: 'Bad request'
+            });
+          }
+        });
         const album = new this.AlbumModel(req.body);
 
         album.save().then((savedAlbum) => {
