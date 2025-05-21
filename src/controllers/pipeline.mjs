@@ -133,27 +133,34 @@ const Pipeline = class Pipeline {
   getCompleteProfile() {
     this.app.get('/pipeline', async (req, res) => {
       try {
+        // User
         const dataUser = await axios.get('https://randomuser.me/api/');
         const user = dataUser.data.results[0];
+        // Numero de téléphone
         const dataPhone = await axios.get(
           'https://randommer.io/api/Phone/Generate?CountryCode=FR&Quantity=1',
           { headers: { 'X-Api-Key': API_KEY } }
         );
+        // IBAN
         const dataIban = await axios.get(
           'https://randommer.io/api/Finance/Iban/FR',
           { headers: { 'X-Api-Key': API_KEY } }
         );
+        // Carte de crédit
         const dataCard = await axios.get(
           'https://randommer.io/api/Card?type=Visa',
           { headers: { 'X-Api-Key': API_KEY } }
         );
         const card = dataCard.data;
+        // Nom aléatoire
         const dataName = await axios.get(
           'https://randommer.io/api/Name?nameType=firstname&quantity=1',
           { headers: { 'X-Api-Key': API_KEY } }
         );
+        // Citation
         const dataQuote = await axios.get('https://api.viewbits.com/v1/zenquotes?mode=batch');
         const quote = dataQuote.data[0];
+        // Blague
         const dataJoke = await axios.get('https://official-joke-api.appspot.com/jokes/programming/random');
         const joke = dataJoke.data[0];
         res.status(200).json({
